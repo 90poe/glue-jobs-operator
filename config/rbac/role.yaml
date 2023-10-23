@@ -1,0 +1,33 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - aws.90poe.io
+  resources:
+  - gluejobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - aws.90poe.io
+  resources:
+  - gluejobs/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - aws.90poe.io
+  resources:
+  - gluejobs/status
+  verbs:
+  - get
+  - patch
+  - update

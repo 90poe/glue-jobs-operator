@@ -1,0 +1,31 @@
+# permissions for end users to edit gluejobs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: gluejob-editor-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: glue-jobs-operator
+    app.kubernetes.io/part-of: glue-jobs-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: gluejob-editor-role
+rules:
+- apiGroups:
+  - aws.90poe.io
+  resources:
+  - gluejobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - aws.90poe.io
+  resources:
+  - gluejobs/status
+  verbs:
+  - get

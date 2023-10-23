@@ -1,0 +1,12 @@
+apiVersion: aws.90poe.io/v1alpha1
+kind: GlueJob
+metadata:
+  labels:
+    app.kubernetes.io/name: gluejob
+    app.kubernetes.io/instance: gluejob-sample
+    app.kubernetes.io/part-of: glue-jobs-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: glue-jobs-operator
+  name: gluejob-sample
+spec:
+  # TODO(user): Add fields here
