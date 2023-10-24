@@ -3,7 +3,35 @@
 # To re-generate a bundle for another specific version without changing the standard setup, you can:
 # - use the VERSION as arg of the bundle target (e.g make bundle VERSION=0.0.2)
 # - use environment variables to overwrite this value (e.g export VERSION=0.0.2)
-VERSION ?= 0.0.1
+VERSION ?= $(shell cat version.txt)
+SHELL := /bin/bash
+GOOS ?= $(shell go env GOOS)
+GOARCH ?= $(shell go env GOARCH)
+BUILT_AT ?= $(shell date +%s)
+GIT_COMMIT ?= $(shell git describe --dirty --always)
+ARCHS := arm64 amd64
+OSES := linux
+
+ifeq ($(GOOS), darwin)
+	ifeq ($(GOARCH), arm64)
+		# K8S don't have yet 1.22.x for arm64
+		GOARCH := amd64
+	endif
+endif
+
+define build_target
+	CGO_ENABLED=0 \
+	GOOS=$(1) \
+	GOARCH=$(2) \
+	go build \
+	-mod=vendor \
+	-ldflags="-s -w \
+	-X github.com/90poe/glue-jobs-operator/internal/version.Version=$(VERSION) \
+	-X github.com/90poe/glue-jobs-operator/internal/version.BuildDate='$(BUILT_AT)' \
+	-X github.com/90poe/glue-jobs-operator/internal/version.GitHash=$(GIT_COMMIT)" \
+	-o bin/manager-$(1)-$(2) \
+	main.go ;
+endef
 
 # CHANNELS define the bundle channels used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g CHANNELS = "candidate,fast,stable")
@@ -76,6 +104,8 @@ lint: $(GOLANGCI_LINT)
 .PHONY: all
 all: build
 
+
+
 ##@ General
 
 # The help target prints out all targets with their descriptions organized
@@ -96,11 +126,11 @@ help: ## Display this help.
 ##@ Development
 
 .PHONY: manifests
-manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
+manifests: $(CONTROLLER_GEN) ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 .PHONY: generate
-generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+generate: $(CONTROLLER_GEN) ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: fmt
@@ -116,10 +146,14 @@ test: manifests generate fmt vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile cover.out
 
 ##@ Build
-
 .PHONY: build
-build: manifests generate fmt vet ## Build manager binary.
-	go build -o bin/manager main.go
+build: generate
+	$(foreach os,$(OSES),$(foreach arch,$(ARCHS),$(call build_target,$(os),$(arch))))
+
+.PHONY: local_build
+local_build: generate fmt vet
+	$(call build_target,$(GOOS),$(GOARCH))
+
 
 .PHONY: run
 run: manifests generate fmt vet ## Run a controller from your host.
@@ -185,7 +219,6 @@ $(LOCALBIN):
 
 ## Tool Binaries
 KUSTOMIZE ?= $(LOCALBIN)/kustomize
-CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 
 ## Tool Versions
@@ -201,12 +234,6 @@ $(KUSTOMIZE): $(LOCALBIN)
 		rm -rf $(LOCALBIN)/kustomize; \
 	fi
 	test -s $(LOCALBIN)/kustomize || { curl -Ss $(KUSTOMIZE_INSTALL_SCRIPT) | bash -s -- $(subst v,,$(KUSTOMIZE_VERSION)) $(LOCALBIN); }
-
-.PHONY: controller-gen
-controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary. If wrong version is installed, it will be overwritten.
-$(CONTROLLER_GEN): $(LOCALBIN)
-	test -s $(LOCALBIN)/controller-gen && $(LOCALBIN)/controller-gen --version | grep -q $(CONTROLLER_TOOLS_VERSION) || \
-	GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
 
 .PHONY: envtest
 envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.

@@ -8,6 +8,11 @@
 bin
 testbin/*
 Dockerfile.cross
+__debug*
+.vscode
+
+# local tests
+aws_v1alpha1_gluejob_90poe.yaml
 
 # Test binary, build with `go test -c`
 *.test

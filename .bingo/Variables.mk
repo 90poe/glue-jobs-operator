@@ -7,16 +7,22 @@ GO     ?= $(shell which go)
 
 # Below generated variables ensure that every time a tool under each variable is invoked, the correct version
 # will be used; reinstalling only if needed.
-# For example for golangci-lint variable:
+# For example for controller-gen variable:
 #
 # In your main Makefile (for non array binaries):
 #
 #include .bingo/Variables.mk # Assuming -dir was set to .bingo .
 #
-#command: $(GOLANGCI_LINT)
-#	@echo "Running golangci-lint"
-#	@$(GOLANGCI_LINT) <flags/args..>
+#command: $(CONTROLLER_GEN)
+#	@echo "Running controller-gen"
+#	@$(CONTROLLER_GEN) <flags/args..>
 #
+CONTROLLER_GEN := $(GOBIN)/controller-gen-v0.13.0
+$(CONTROLLER_GEN): $(BINGO_DIR)/controller-gen.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/controller-gen-v0.13.0"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=controller-gen.mod -o=$(GOBIN)/controller-gen-v0.13.0 "sigs.k8s.io/controller-tools/cmd/controller-gen"
+
 GOLANGCI_LINT := $(GOBIN)/golangci-lint-v1.54.2
 $(GOLANGCI_LINT): $(BINGO_DIR)/golangci-lint.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
