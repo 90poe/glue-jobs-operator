@@ -2,7 +2,7 @@ apiVersion: v2
 name: glue-jobs-operator
 # Also update CHANGELOG.md
 version: 1.0.0
-appVersion: v0.1.0
+appVersion: v0.1.1
 home: https://github.com/90poe/glue-jobs-operator
 description: AWS Glue Jobs Operator for Kubernetes. Creates AWS Glue Jobs.
 icon: https://www.cloudmantra.net/wp-content/uploads/2018/04/AWS_GLue__1_400x260.png
