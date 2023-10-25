@@ -6,6 +6,9 @@ run:
   # timeout for analysis, e.g. 30s, 5m, default is 1m
   deadline: 10m
 
+  # use vendors and don't download
+  modules-download-mode: vendor
+
 # all available settings of specific linters
 linters-settings:
   errcheck:

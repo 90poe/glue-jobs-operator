@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -33,6 +34,7 @@ import (
 
 	awsv1alpha1 "github.com/90poe/glue-jobs-operator/api/v1alpha1"
 	"github.com/90poe/glue-jobs-operator/controllers"
+	"github.com/90poe/glue-jobs-operator/internal/version"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -52,13 +54,11 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
-	var zapLogLevel string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	flag.StringVar(&zapLogLevel, "zap-log-level", "INFO", "Log level (INFO|DEBUG|TRACE).")
 	opts := zap.Options{
 		Development: false,
 	}
@@ -109,7 +109,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	setupLog.Info("starting manager")
+	setupLog.Info(fmt.Sprintf("starting manager version=%v, built at=%v, git hash=%v",
+		version.Version, version.BuildDate, version.GitHash))
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)

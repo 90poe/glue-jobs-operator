@@ -22,12 +22,20 @@ import (
 
 // https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/service/glue@v1.63.0/types#JobCommand
 type GlueJobCommand struct {
+	// +required
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MaxLength=1024
+	// +kubebuilder:validation:MinLength=1
 	Name string `json:"name"`
 	// +kubebuilder:default=3
 	// +kubebuilder:validation:Format=`^(2|3)$`
 	PythonVersion int `json:"pythonVersion,omitempty"`
 	// +kubebuilder:default=glueetl
 	Runtime string `json:"runtime,omitempty"`
+	// +required
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MaxLength=1024
+	// +kubebuilder:validation:MinLength=10
 	// +kubebuilder:validation:Format=`^s3://.+\/.+$`
 	ScriptLocation string `json:"scriptLocation"`
 }
@@ -43,12 +51,22 @@ type GlueJobSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Name is the name of the Glue Job
+	// +required
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MaxLength=1024
+	// +kubebuilder:validation:MinLength=10
 	Name string `json:"name"`
 
 	// Command is the Glue Job Command https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/service/glue@v1.63.0/types#JobCommand
+	// +required
+	// +kubebuilder:validation:Required
 	Command GlueJobCommand `json:"command"`
 
 	// Role is the IAM role to be used by the Glue Job
+	// +required
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MaxLength=1024
+	// +kubebuilder:validation:MinLength=28
 	// +kubebuilder:validation:Format=`^arn:aws:iam::.*:role\/.*$`
 	Role string `json:"role"`
 
