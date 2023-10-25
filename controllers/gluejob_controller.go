@@ -206,7 +206,7 @@ func (r *GlueJobReconciler) setLatestError(
 }
 
 func (r *GlueJobReconciler) createJob(awsGJ *glue.Job, reqLogger logr.Logger) error {
-	reqLogger.V(1).Info("Create GlueJob")
+	reqLogger.V(0).Info("Create GlueJob")
 	err := awsGJ.CreateJob()
 	if err != nil {
 		return err
@@ -215,7 +215,7 @@ func (r *GlueJobReconciler) createJob(awsGJ *glue.Job, reqLogger logr.Logger) er
 }
 
 func (r *GlueJobReconciler) updateJob(awsGJ *glue.Job, reqLogger logr.Logger) error {
-	reqLogger.V(1).Info("Update GlueJob")
+	reqLogger.V(0).Info("Update GlueJob")
 	err := awsGJ.UpateJob()
 	if err != nil {
 		return err
