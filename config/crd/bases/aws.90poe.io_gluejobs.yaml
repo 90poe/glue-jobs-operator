@@ -108,6 +108,11 @@ spec:
                 maxLength: 1024
                 minLength: 28
                 type: string
+              tags:
+                additionalProperties:
+                  type: string
+                description: Tags is the tags to be set on the Glue Job
+                type: object
               timeout:
                 default: 20
                 description: Timeout is the timeout in minutes for the Glue Job, max

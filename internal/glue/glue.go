@@ -3,6 +3,7 @@ package glue
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strings"
 
 	awsv1alpha1 "github.com/90poe/glue-jobs-operator/api/v1alpha1"
@@ -71,6 +72,9 @@ func (g *Job) CreateJob() error {
 	if strings.ToLower(g.job.Command.Name) != glueETL {
 		command.Runtime = aws.String(g.job.Command.Runtime)
 	}
+	tags := make(map[string]string, len(g.job.Tags)+len(jobOwnedByOperator))
+	maps.Copy(tags, g.job.Tags)
+	maps.Copy(tags, jobOwnedByOperator)
 	input := &awsglue.CreateJobInput{
 		Name:            aws.String(g.job.Name),
 		Command:         command,
@@ -85,7 +89,7 @@ func (g *Job) CreateJob() error {
 		},
 		MaxRetries:       g.job.MaxRetries,
 		DefaultArguments: g.job.DefaultArguments,
-		Tags:             jobOwnedByOperator,
+		Tags:             tags,
 	}
 	// create job
 	_, err := g.awsClient.CreateJob(g.ctx, input)
