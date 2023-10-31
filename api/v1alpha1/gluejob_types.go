@@ -102,6 +102,9 @@ type GlueJobSpec struct {
 
 	// DefaultArguments is the default arguments to be used by the Glue Job
 	DefaultArguments map[string]string `json:"defaultArguments,omitempty"`
+
+	// Tags is the tags to be set on the Glue Job
+	Tags map[string]string `json:"tags,omitempty"`
 }
 
 // GlueJobStatus defines the observed state of GlueJob
