@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	awsglue "github.com/aws/aws-sdk-go-v2/service/glue"
 	"github.com/aws/aws-sdk-go-v2/service/glue/types"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 )
 
 const (
@@ -30,6 +31,8 @@ type Job struct {
 	job       awsv1alpha1.GlueJobSpec
 	exists    bool
 	awsClient *awsglue.Client
+	accountID string
+	region    string
 }
 
 // NewJob will return a new Job struct
@@ -47,6 +50,15 @@ func NewJob(ctx context.Context, job awsv1alpha1.GlueJobSpec) (*Job, error) {
 
 	// Create an Amazon Glue service client
 	gJob.awsClient = awsglue.NewFromConfig(cfg)
+
+	// Get Account ID and Region
+	stsClient := sts.NewFromConfig(cfg)
+	result, err := stsClient.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to call GetCallerIdentity: %w", err)
+	}
+	gJob.accountID = *result.Account
+	gJob.region = cfg.Region
 
 	// check that GlueJob exists on AWS
 	gJob.exists, err = gJob.checkJobExistsOnAWS()
@@ -72,9 +84,6 @@ func (g *Job) CreateJob() error {
 	if strings.ToLower(g.job.Command.Name) != glueETL {
 		command.Runtime = aws.String(g.job.Command.Runtime)
 	}
-	tags := make(map[string]string, len(g.job.Tags)+len(jobOwnedByOperator))
-	maps.Copy(tags, g.job.Tags)
-	maps.Copy(tags, jobOwnedByOperator)
 	input := &awsglue.CreateJobInput{
 		Name:            aws.String(g.job.Name),
 		Command:         command,
@@ -89,7 +98,7 @@ func (g *Job) CreateJob() error {
 		},
 		MaxRetries:       g.job.MaxRetries,
 		DefaultArguments: g.job.DefaultArguments,
-		Tags:             tags,
+		Tags:             g.getTags(),
 	}
 	// create job
 	_, err := g.awsClient.CreateJob(g.ctx, input)
@@ -131,6 +140,14 @@ func (g *Job) UpateJob() error {
 	if err != nil {
 		return fmt.Errorf("failed to update Glue Job %s: %w", g.job.Name, err)
 	}
+	// Update tags
+	_, err = g.awsClient.TagResource(g.ctx, &awsglue.TagResourceInput{
+		ResourceArn: aws.String(fmt.Sprintf("arn:aws:glue:%s:%s:job/%s", g.region, g.accountID, g.job.Name)),
+		TagsToAdd:   g.getTags(),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update Glue Job tags %s: %w", g.job.Name, err)
+	}
 	return nil
 }
 
@@ -147,6 +164,14 @@ func (g *Job) DeleteJob() error {
 		return fmt.Errorf("failed to delete Glue Job %s: %w", g.job.Name, err)
 	}
 	return nil
+}
+
+// getTags will return tags for Glue Job with merged required tags for operator
+func (g *Job) getTags() map[string]string {
+	tags := make(map[string]string, len(g.job.Tags)+len(jobOwnedByOperator))
+	maps.Copy(tags, g.job.Tags)
+	maps.Copy(tags, jobOwnedByOperator)
+	return tags
 }
 
 func (g *Job) checkJobExistsOnAWS() (bool, error) {
